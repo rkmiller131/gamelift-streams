@@ -1,0 +1,28 @@
+{
+  "name": "gamelift-streams",
+  "version": "1.0.0",
+  "description": "AWS GameLift Cloud Streaming test bed.",
+  "homepage": "https://github.com/rkmiller131/gamelift-streams#readme",
+  "bugs": {
+    "url": "https://github.com/rkmiller131/gamelift-streams/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rkmiller131/gamelift-streams.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node server/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-gameliftstreams": "^3.775.0",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "path": "^0.12.7"
+  }
+}
