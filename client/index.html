@@ -1,21 +1,568 @@
 <!DOCTYPE html>
 <html lang="en">
-  <meta charset="UTF-8">
-  <title>AWS:Project Aragorn</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Streaming</title>
 
-  <style>
-  </style>
+    <!-- Critical CSS for stream behavior -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #ffffff;
+        }
 
-  <script src=""></script>
-  <body>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-    <div class="">
-      <h1>This is a Heading</h1>
-      <p>This is a paragraph.</p>
-      <p>This is another paragraph.</p>
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        /* Stream container styles */
+        #streamContainer {
+            width: 100%;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Critical CSS for proper stream behavior */
+        #streamFullscreenContainer:not(:fullscreen) > #streamFullscreenOverlay {
+            display: none;
+        }
+
+        #streamFullscreenContainer:fullscreen > #streamFullscreenOverlay {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #streamFullscreenContainer:fullscreen > #streamVideoElement {
+            width: 100%;
+            height: 100%;
+        }
+
+        #streamVideoElement::-webkit-media-controls {
+            display: none !important;
+        }
+
+        #streamVideoElement {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Control buttons */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button.secondary {
+            background-color: #f44336;
+        }
+
+        button.secondary:hover {
+            background-color: #d32f2f;
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid #45a049;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-message {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+
+        .error-message {
+            color: #f44336;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #loadingScreenCanvas {
+            margin: 0 auto;
+            display: block;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Welcome Panel -->
+        <div id="welcomePanel" class="panel active">
+            <h1>Game Streaming</h1>
+            <p class="status-message">Ready to start your gaming session</p>
+            <div class="controls">
+                <button id="startButton" onclick="startStreaming()">Start Game</button>
+            </div>
+        </div>
+
+        <!-- Connecting Panel -->
+        <div id="connectingPanel" class="panel">
+            <h1>Connecting to Game Server</h1>
+            <canvas id="loadingScreenCanvas"></canvas>
+            <p class="status-message" id="connectionStatus">Establishing connection...</p>
+        </div>
+
+        <!-- Streaming Panel -->
+        <div id="streamingPanel" class="panel">
+            <h1>Game Stream</h1>
+            <div id="streamFullscreenContainer">
+                <div id="streamFullscreenOverlay">&nbsp;</div>
+                <video id="streamVideoElement" autoplay playsinline disablepictureinpicture></video>
+                <audio id="streamAudioElement" autoplay></audio>
+            </div>
+            <div class="controls">
+                <button id="fullscreenButton" onclick="goFullscreen()">Fullscreen</button>
+                <button id="toggleInputButton" onclick="toggleInput()">Detach Input</button>
+                <button id="terminateButton" onclick="terminateStream()" class="secondary">End Session</button>
+            </div>
+        </div>
+
+        <!-- Disconnected Panel -->
+        <div id="disconnectedPanel" class="panel">
+            <h1>Stream Disconnected</h1>
+            <p class="status-message">Your game session has ended</p>
+            <div class="controls">
+                <button id="reconnectButton" onclick="reconnectStreaming()" style="display: none">Reconnect</button>
+                <button id="restartButton" onclick="restartSession()">New Session</button>
+            </div>
+        </div>
+
+        <!-- Error Panel -->
+        <div id="errorPanel" class="panel">
+            <h1>Connection Error</h1>
+            <p class="error-message" id="errorMessage">Unable to connect to the game server</p>
+            <div class="controls">
+                <button id="retryButton" onclick="restartSession()">Try Again</button>
+            </div>
+        </div>
     </div>
 
-  </body>
+    <!-- Import GameLiftStreams SDK -->
+    <script type="text/javascript" src="gameliftstreams-1.0.0.js"></script>
+
+    <!-- Optional touch-to-mouse converter -->
+    <script type="text/javascript" src="touchtomouse.js"></script>
+
+    <!-- Loading screen animation -->
+    <script type="text/javascript" src="loadingscreen.js"></script>
+
+    <!-- Utility functions -->
+    <script type="text/javascript" src="utils.js"></script>
+
+    <!-- Client application logic -->
+    <script type="text/javascript">
+        // Global variables
+        let gameLiftStreams = null;
+        let inputEnabled = true;
+        let connectionToken = null;
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        // Setup the GameLift Streams client
+        function initializeApp() {
+            // When in fullscreen, try using Keyboard Lock API to capture all keys
+            if ('keyboard' in navigator && 'lock' in navigator.keyboard) {
+                document.addEventListener('fullscreenchange', () => {
+                    if (document.fullscreenElement) {
+                        navigator.keyboard.lock();
+                    }
+                });
+            }
+
+            // Configure GameLift Streams SDK
+            if (typeof gameliftstreams !== 'undefined') {
+                gameliftstreams.setLogLevel('debug');
+
+                gameLiftStreams = new gameliftstreams.GameLiftStreams({
+                    videoElement: document.getElementById('streamVideoElement'),
+                    audioElement: document.getElementById('streamAudioElement'),
+                    inputConfiguration: {
+                        autoMouse: true,
+                        autoKeyboard: true,
+                        autoGamepad: true,
+                        hapticFeedback: true,
+                        setCursor: 'visibility',
+                        autoPointerLock: 'fullscreen',
+                    },
+                    clientConnection: {
+                        connectionState: handleConnectionState,
+                        channelError: handleChannelError,
+                        serverDisconnect: handleServerDisconnect,
+                        applicationMessage: handleApplicationMessage
+                    }
+                });
+
+                // For touchscreen support
+                if (typeof RegisterTouchToMouse === 'function') {
+                    RegisterTouchToMouse(document.getElementById('streamVideoElement'));
+                }
+
+                // Check for reconnection token in URL
+                const urlParams = new URLSearchParams(window.location.search);
+                connectionToken = urlParams.get('token');
+
+                if (connectionToken) {
+                    // Show reconnect UI
+                    document.getElementById('reconnectButton').style.display = 'inline-block';
+                    showPanel('disconnectedPanel');
+                }
+            } else {
+                console.error('GameLiftStreams SDK not loaded');
+                showError('GameLiftStreams SDK not loaded. Please check your internet connection.');
+            }
+        }
+
+        // Start streaming
+        async function startStreaming() {
+            try {
+                // Safari/iOS browser fix for audio autoplay
+                if (navigator.userAgent.indexOf(' AppleWebKit/') != -1 &&
+                    navigator.userAgent.indexOf(' Gecko/') == -1 &&
+                    navigator.userAgent.indexOf(' Chrome/') == -1) {
+                    const preStreamAudio = document.createElement('audio');
+                    preStreamAudio.loop = true;
+                    preStreamAudio.src = 'silence.mp3';
+                    void preStreamAudio.play();
+
+                    // Clean up later
+                    window.preStreamAudio = preStreamAudio;
+                }
+
+                showPanel('connectingPanel');
+                updateConnectionStatus('Initializing connection...');
+
+                // Start loading animation
+                LoadingScreenStart();
+
+                // Generate the signal request for a new WebRTC connection
+                const signalRequest = await gameLiftStreams.generateSignalRequest();
+
+                // Send the connection request to our backend
+                updateConnectionStatus('Connecting to GameLift service...');
+                const response = await doPost('/api/CreateStreamSession', {
+                    SignalRequest: signalRequest
+                    // Server will use environment variables for other parameters
+                });
+
+                connectionToken = response.Token;
+
+                // Poll for signal response
+                let signalResponse = '';
+                let attempts = 0;
+                const maxAttempts = 30; // 30 seconds maximum
+
+                updateConnectionStatus('Waiting for stream to initialize...');
+
+                while (!signalResponse && attempts < maxAttempts) {
+                    attempts++;
+                    await sleep(1000); // Wait 1 second
+
+                    const responseData = await doPost('/api/GetSignalResponse', { Token: connectionToken });
+                    signalResponse = responseData.SignalResponse;
+
+                    // Update UI with progress
+                    updateConnectionStatus(`Initializing game (${attempts}/${maxAttempts})...`);
+                }
+
+                if (!signalResponse) {
+                    throw new Error('Timed out waiting for signal response');
+                }
+
+                // Complete connection by forwarding signal response
+                updateConnectionStatus('Establishing stream connection...');
+                await gameLiftStreams.processSignalResponse(signalResponse);
+
+                // Store connection token in URL for reconnection
+                setQueryParams(new Map([['token', connectionToken]]));
+
+                // Stop loading animation
+                LoadingScreenStop();
+
+                // Show streaming UI
+                showPanel('streamingPanel');
+
+                // Input is enabled by default
+                inputEnabled = true;
+            } catch (error) {
+                console.error('Connection error:', error);
+                LoadingScreenStop();
+
+                if (gameLiftStreams) {
+                    gameLiftStreams.close();
+                }
+
+                showError('Failed to connect: ' + (error.message || 'Unknown error'));
+            } finally {
+                // Clean up the temporary audio element
+                if (window.preStreamAudio) {
+                    window.preStreamAudio.pause();
+                    window.preStreamAudio.remove();
+                    delete window.preStreamAudio;
+                }
+            }
+        }
+
+        // Reconnect to an existing stream session
+        async function reconnectStreaming() {
+            try {
+                showPanel('connectingPanel');
+                updateConnectionStatus('Reconnecting to your game...');
+
+                // Start loading animation
+                LoadingScreenStart();
+
+                // Generate a new signal request
+                const signalRequest = await gameLiftStreams.generateSignalRequest();
+
+                // Send reconnection request with existing token
+                const result = await doPost('/api/ReconnectStreamSession', {
+                    Token: connectionToken,
+                    SignalRequest: signalRequest,
+                });
+
+                // Process the signal response
+                await gameLiftStreams.processSignalResponse(result.SignalResponse);
+
+                // Stop loading animation
+                LoadingScreenStop();
+
+                // Show streaming UI
+                showPanel('streamingPanel');
+
+                // Input is enabled by default
+                inputEnabled = true;
+            } catch (error) {
+                console.error('Reconnection error:', error);
+                LoadingScreenStop();
+
+                if (gameLiftStreams) {
+                    gameLiftStreams.close();
+                }
+
+                showError('Failed to reconnect: ' + (error.message || 'Session may have expired'));
+
+                // Clear token since reconnection failed
+                clearURLToken();
+                connectionToken = null;
+                document.getElementById('reconnectButton').style.display = 'none';
+            }
+        }
+
+        // Terminate the stream session
+        async function terminateStream() {
+            if (connectionToken) {
+                try {
+                    await doPost('/api/DestroyStreamSession', { Token: connectionToken });
+                } catch (error) {
+                    console.error('Error terminating stream:', error);
+                }
+            }
+
+            // Clear URL token and disconnect
+            clearURLToken();
+            connectionToken = null;
+            document.getElementById('reconnectButton').style.display = 'none';
+            disconnectStream();
+        }
+
+        // Disconnect from stream but keep reconnection data
+        function disconnectStream() {
+            if (gameLiftStreams) {
+                gameLiftStreams.close();
+            }
+            showPanel('disconnectedPanel');
+        }
+
+        // Restart the entire session
+        function restartSession() {
+            clearURLToken();
+            connectionToken = null;
+            window.location.reload();
+        }
+
+        // Toggle input controls
+        function toggleInput() {
+            if (!gameLiftStreams) return;
+
+            inputEnabled = !inputEnabled;
+            const button = document.getElementById('toggleInputButton');
+
+            if (inputEnabled) {
+                gameLiftStreams.attachInput();
+                button.textContent = 'Detach Input';
+            } else {
+                gameLiftStreams.detachInput();
+                button.textContent = 'Attach Input';
+            }
+        }
+
+        // Go fullscreen
+        function goFullscreen() {
+            // Ensure input is enabled when entering fullscreen
+            if (!inputEnabled) {
+                toggleInput();
+            }
+
+            const container = document.getElementById('streamFullscreenContainer');
+            if (container) {
+                container.requestFullscreen().catch(err => {
+                    console.error('Error attempting to enable fullscreen:', err);
+                });
+            }
+        }
+
+        // Show the specified panel, hide others
+        function showPanel(panelId) {
+            const panels = document.querySelectorAll('.panel');
+            panels.forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            const activePanel = document.getElementById(panelId);
+            if (activePanel) {
+                activePanel.classList.add('active');
+            }
+        }
+
+        // Update connection status message
+        function updateConnectionStatus(message) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (statusElement) {
+                statusElement.textContent = message;
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            if (errorElement) {
+                errorElement.textContent = message;
+            }
+            showPanel('errorPanel');
+        }
+
+        // Clear the URL token
+        function clearURLToken() {
+            window.history.replaceState(null, null, window.location.pathname);
+        }
+
+        // Helper function to sleep for a specified time
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Helper to post JSON data
+        async function doPost(url, data) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API request failed:', error);
+                throw error;
+            }
+        }
+
+        // Connection state callback
+        function handleConnectionState(state) {
+            console.log('Connection state:', state);
+
+            if (state === 'disconnected') {
+                disconnectStream();
+            }
+        }
+
+        // Channel error callback
+        function handleChannelError(error) {
+            console.error('WebRTC connection error:', error);
+            disconnectStream();
+        }
+
+        // Server disconnect callback
+        function handleServerDisconnect(reasonCode) {
+            console.log('Server disconnected, reason:', reasonCode);
+
+            if (reasonCode === 'terminated') {
+                // Stream session ended, disable reconnection
+                clearURLToken();
+                connectionToken = null;
+                document.getElementById('reconnectButton').style.display = 'none';
+            }
+
+            disconnectStream();
+        }
+
+        // Application message callback
+        function handleApplicationMessage(message) {
+            console.log('Received message from application:', message.length, 'bytes');
+        }
+    </script>
+</body>
 </html>

@@ -22,4 +22,4 @@ if (!gameliftstreams.config.region) {
 
 console.log(`GameLiftStreams client initialized with region: ${gameliftstreams.config.region}`);
 
-export default gameliftstreams;
+module.exports = gameliftstreams;
