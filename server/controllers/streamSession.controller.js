@@ -3,11 +3,11 @@ const crypto = require('crypto');
 const gameliftstreams = require('../services/gameLiftStreams.service');
 const { parseLocations } = require('../utils/parse.utils');
 
-const STREAM_CONNECTION_TIMEOUT_SECONDS = process.env.STREAM_CONNECTION_TIMEOUT_SECONDS || 600;
+const STREAM_CONNECTION_TIMEOUT_SECONDS = Number(process.env.STREAM_CONNECTION_TIMEOUT_SECONDS) || 600;
 const STREAM_GROUP_ID = process.env.STREAM_GROUP_ID;
 const APPLICATION_ID = process.env.APPLICATION_ID;
 const DEFAULT_USER_ID = process.env.DEFAULT_USER_ID || 'DefaultPlayer';
-const SESSION_LENGTH_SECONDS = process.env.SESSION_LENGTH_SECONDS || 12 * 3600;
+const SESSION_LENGTH_SECONDS = Number(process.env.SESSION_LENGTH_SECONDS) || 12 * 3600;
 
 const generalErrorStatusCode = 502;
 
