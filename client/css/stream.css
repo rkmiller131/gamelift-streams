@@ -1,0 +1,25 @@
+/* Critical CSS for proper stream behavior */
+#streamFullscreenContainer:not(:fullscreen) > #streamFullscreenOverlay {
+    display: none;
+}
+
+#streamFullscreenContainer:fullscreen > #streamFullscreenOverlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    pointer-events: none;
+}
+
+/* Scale video up to match container in fullscreen mode */
+#streamFullscreenContainer:fullscreen > #streamVideoElement {
+    width: 100%;
+    height: 100%;
+}
+
+/* Prevent Safari from drawing media controls over stream */
+#streamVideoElement::-webkit-media-controls {
+    display: none !important;
+}

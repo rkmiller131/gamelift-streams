@@ -6,23 +6,23 @@ let startTime = new Date();
 
 function LoadingScreenStart() {
     startTime = new Date();
-    logoImage.src = "LoadingScreen/LoadingLogo.png";
-    backgroundImage.src = "LoadingScreen/Background.png";
+    logoImage.src = 'public/LoadingLogo.png';
+    backgroundImage.src = 'public/Background.png';
 
     loadingFlag = true;
-    const canvas = document.getElementById("loadingScreenCanvas");
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
+    const canvas = document.getElementById('loadingScreenCanvas');
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
     canvas.style.aspectRatio = aspectRatio.toString();
     window.requestAnimationFrame(LoadingScreenAnimation);
 }
 
 function LoadingScreenAnimation() {
-    const canvas = document.getElementById("loadingScreenCanvas");
+    const canvas = document.getElementById('loadingScreenCanvas');
     // Resizing so the canvas isn't stretched to fit the window.
     canvas.width = window.innerWidth;
     canvas.height = window.innerWidth / aspectRatio;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
 
     // Draw background
     ctx.drawImage(
