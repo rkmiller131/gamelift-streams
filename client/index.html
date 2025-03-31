@@ -63,7 +63,21 @@
                 <div class="controls">
                     <button id="toggleInputButton" onclick="toggleInput()">Detach Input</button>
                     <button id="terminateButton" onclick="terminateStream()" class="secondary">End Session</button>
-                    <button id="fullscreenButton" onclick="goFullscreen()">Fullscreen</button>
+                    <div id="fullscreenButton" onclick="goFullscreen()">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g clip-path="url(#clip0_25_9)">
+                                <path d="M26.7913 9.89995V1.19995H18.1294" stroke="white" stroke-width="3"/>
+                                <path d="M1.20874 9.89995V1.19995H9.87061" stroke="white" stroke-width="3"/>
+                                <path d="M26.7913 18V26.7H18.1294" stroke="white" stroke-width="3"/>
+                                <path d="M1.20874 18V26.6H9.87061" stroke="white" stroke-width="3"/>
+                            </g>
+                            <defs>
+                                <clipPath id="clip0_25_9">
+                                    <rect width="28" height="28" fill="white"/>
+                                </clipPath>
+                            </defs>
+                        </svg>
+                    </div>
                 </div>
             </div>
 
@@ -82,7 +96,6 @@
                 <h1>Connection Error</h1>
                 <p class="error-message" id="errorMessage">Unable to connect to the game server</p>
                 <div class="controls">
-                    <button id="terminateButton" onclick="terminateStream()" class="secondary">End Session</button>
                     <button id="retryButton" onclick="restartSession()">Try Again</button>
                 </div>
             </div>

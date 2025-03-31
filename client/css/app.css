@@ -52,12 +52,23 @@ h1 {
 /* Control buttons */
 .controls {
   position: absolute;
-  bottom: 1%;
-  right: 0;
+  bottom: 2%;
+  right: 2%;
   z-index: 50;
   display: flex;
+  align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+.controls svg {
+  transition: width 0.2s, height 0.2s;
+  cursor: pointer;
+}
+
+.controls svg:hover {
+  width: 32px;
+  height: 32px;
 }
 
 button {

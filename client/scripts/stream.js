@@ -108,12 +108,16 @@ async function startStreaming() {
         showPanel('streamingPanel');
 
         // Input is enabled by default
-        inputEnabled = true;
+        gameLiftStreams.attachInput();
+        // inputEnabled = true;
+        // if (!inputEnabled) {
+        //     toggleInput();
+        // }
 
         // Start performance monitoring after a short delay
         setTimeout(() => {
             startPerformanceMonitoring();
-        }, 1000);
+        }, 3000);
 
         return true;
     } catch (error) {
@@ -164,9 +168,10 @@ async function reconnectStreaming() {
         showPanel('streamingPanel');
 
         // Input is enabled by default
-        inputEnabled = true;
-        gameLiftStreams.attachInput();
-        document.getElementById('toggleInputButton').textContent = 'Detach Input';
+        // inputEnabled = true;
+        if (!inputEnabled) {
+            toggleInput();
+        }
 
         // Start performance monitoring after a short delay
         setTimeout(() => {
@@ -230,7 +235,6 @@ function toggleInput() {
 
     inputEnabled = !inputEnabled;
     const button = document.getElementById('toggleInputButton');
-
     if (inputEnabled) {
         gameLiftStreams.attachInput();
         button.textContent = 'Detach Input';
@@ -287,4 +291,11 @@ function handleServerDisconnect(reasonCode) {
 // Application message callback
 function handleApplicationMessage(message) {
     console.log('Received message from application:', message.length, 'bytes');
+}
+
+// Restart the entire session
+function restartSession() {
+    clearURLToken();
+    connectionToken = null;
+    window.location.reload();
 }

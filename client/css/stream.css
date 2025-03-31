@@ -23,3 +23,11 @@
 #streamVideoElement::-webkit-media-controls {
     display: none !important;
 }
+
+#fullscreenButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    width: 36px;
+}

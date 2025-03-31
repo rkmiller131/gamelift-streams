@@ -34,10 +34,3 @@ function initializeApp() {
         startStreaming();
     }
 }
-
-// Restart the entire session
-function restartSession() {
-  clearURLToken();
-  connectionToken = null;
-  window.location.reload();
-}
