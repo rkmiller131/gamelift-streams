@@ -20,6 +20,6 @@ if (!gameliftstreams.config.region) {
   process.exit(1);
 }
 
-console.log(`GameLiftStreams client initialized with region: ${gameliftstreams.config.region}`);
+// console.log(`GameLiftStreams client initialized with region: ${gameliftstreams.config.region}`);
 
 module.exports = gameliftstreams;

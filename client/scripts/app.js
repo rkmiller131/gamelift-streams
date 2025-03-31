@@ -28,6 +28,10 @@ function initializeApp() {
         // Show reconnect UI
         document.getElementById('reconnectButton').style.display = 'inline-block';
         showPanel('disconnectedPanel');
+    } else {
+        // No reconnection token, start new streaming session
+        console.log('Initiating new streaming session...');
+        startStreaming();
     }
 }
 
@@ -36,34 +40,4 @@ function restartSession() {
   clearURLToken();
   connectionToken = null;
   window.location.reload();
-}
-
-// Show the specified panel, hide others
-function showPanel(panelId) {
-  const panels = document.querySelectorAll('.panel');
-  panels.forEach(panel => {
-      panel.classList.remove('active');
-  });
-
-  const activePanel = document.getElementById(panelId);
-  if (activePanel) {
-      activePanel.classList.add('active');
-  }
-}
-
-// Update connection status message
-function updateConnectionStatus(message) {
-  const statusElement = document.getElementById('connectionStatus');
-  if (statusElement) {
-      statusElement.textContent = message;
-  }
-}
-
-// Show error message
-function showError(message) {
-  const errorElement = document.getElementById('errorMessage');
-  if (errorElement) {
-      errorElement.textContent = message;
-  }
-  showPanel('errorPanel');
 }

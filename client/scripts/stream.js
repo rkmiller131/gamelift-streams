@@ -81,7 +81,7 @@ async function startStreaming() {
 
         while (!signalResponse && attempts < maxAttempts) {
             attempts++;
-            await sleep(1000); // Wait 1 second
+            await sleep(2000); // Wait 2 seconds
 
             const responseData = await sendPost('/api/GetSignalResponse', { Token: connectionToken });
             signalResponse = responseData.SignalResponse;
@@ -165,6 +165,8 @@ async function reconnectStreaming() {
 
         // Input is enabled by default
         inputEnabled = true;
+        gameLiftStreams.attachInput();
+        document.getElementById('toggleInputButton').textContent = 'Detach Input';
 
         // Start performance monitoring after a short delay
         setTimeout(() => {

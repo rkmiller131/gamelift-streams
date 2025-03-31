@@ -9,6 +9,7 @@ body {
   background-color: #121212;
   color: #ffffff;
   height: 100vh;
+  width: 100vw;
   overflow: hidden;
 }
 
@@ -50,7 +51,10 @@ h1 {
 
 /* Control buttons */
 .controls {
-  margin-top: 20px;
+  position: absolute;
+  bottom: 1%;
+  right: 0;
+  z-index: 50;
   display: flex;
   justify-content: center;
   gap: 10px;

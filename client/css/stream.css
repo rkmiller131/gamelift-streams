@@ -14,9 +14,9 @@
 }
 
 /* Scale video up to match container in fullscreen mode */
-#streamFullscreenContainer:fullscreen > #streamVideoElement {
-    width: 100%;
-    height: 100%;
+#streamVideoElement {
+    width: 100vw;
+    height: 100vh;
 }
 
 /* Prevent Safari from drawing media controls over stream */

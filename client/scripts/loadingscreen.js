@@ -11,8 +11,8 @@ function LoadingScreenStart() {
 
     loadingFlag = true;
     const canvas = document.getElementById('loadingScreenCanvas');
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
+    canvas.style.width = '50%';
+    canvas.style.height = 'auto';
     canvas.style.aspectRatio = aspectRatio.toString();
     window.requestAnimationFrame(LoadingScreenAnimation);
 }
