@@ -1,14 +1,21 @@
-let gameLiftStreams = null;
+// --------------------------------------------------------------------------------------
+// GAMELIFT STREAM CLASS INITIALIZATION -------------------------------------------------
+// --------------------------------------------------------------------------------------
 let inputEnabled = true;
-let connectionToken = null;
 
-// Setup the GameLift Streams client
 function initializeGameLiftStreams() {
-    // Configure GameLift Streams SDK
+    const gameLiftStreams = globals.getData('gameLiftStreams');
+
+    if (gameLiftStreams) {
+        throw new Error('initializeGameLiftStreams() should only be called once.');
+    }
+
+    // Configure GameLift Streams - "gameliftstreams" is from the SDK
     if (typeof gameliftstreams !== 'undefined') {
         gameliftstreams.setLogLevel('debug');
 
-        gameLiftStreams = new gameliftstreams.GameLiftStreams({
+        // https://gameliftstreams-public-website-assets.s3.us-west-2.amazonaws.com/AmazonGameLiftStreamsWebSDKReference-v1.0.0.pdf
+        globals.setData('gameLiftStreams', new gameliftstreams.GameLiftStreams({
             videoElement: document.getElementById('streamVideoElement'),
             audioElement: document.getElementById('streamAudioElement'),
             inputConfiguration: {
@@ -16,8 +23,9 @@ function initializeGameLiftStreams() {
                 autoKeyboard: true,
                 autoGamepad: true,
                 hapticFeedback: true,
-                setCursor: 'visibility',
-                autoPointerLock: 'fullscreen',
+                setCursor: 'visibility', // Local cursor is never modified, but it can be hidden
+                // autoPointerLock: 'fullscreen',
+                autoPointerLock: true, // The mouse is always captured whenever the remote cursor has been made invisible on stream host.
             },
             clientConnection: {
                 connectionState: handleConnectionState,
@@ -25,12 +33,10 @@ function initializeGameLiftStreams() {
                 serverDisconnect: handleServerDisconnect,
                 applicationMessage: handleApplicationMessage
             }
-        });
+        }));
 
-        // For touchscreen support
-        if (typeof RegisterTouchToMouse === 'function') {
-            RegisterTouchToMouse(document.getElementById('streamVideoElement'));
-        }
+        // For touchscreen support, convert inputs to mouse events (optional)
+        RegisterTouchToMouse(document.getElementById('streamVideoElement'));
 
         return true;
     } else {
@@ -39,8 +45,47 @@ function initializeGameLiftStreams() {
     }
 }
 
-// Start streaming
+// -----------------------------------------------------------------------------------------------------
+// GAMELIFT STREAM CLASS CALLBACKS ---------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
+
+function handleConnectionState(state) {
+    console.log('Connection state: ', state);
+
+    if (state === 'disconnected') {
+        disconnectStream();
+    }
+}
+
+function handleChannelError(error) {
+    console.error('WebRTC internal connection error: ', error);
+    disconnectStream();
+}
+
+function handleServerDisconnect(reasonCode) {
+    console.log('Server disconnected, reason: ', reasonCode);
+
+    if (reasonCode === 'terminated') {
+        // Stream session has ended, disable all reconnection UI
+        clearURLToken();
+        globals.setData('connectionToken', null);
+        document.getElementById('reconnectButton').style.display = 'none';
+    }
+    // The connection state will transition to 'disconnected' within 5 seconds,
+    // but there is no reason to wait. The client can disconnect immediately.
+    disconnectStream();
+}
+
+function handleApplicationMessage(message) {
+    console.log('Received message from application: ', message.length, 'bytes');
+}
+
+// -----------------------------------------------------------------------------------------------------
+// STREAMING LIFECYCLE METHODS -------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
+
 async function startStreaming() {
+    const gameLiftStreams = globals.getData('gameLiftStreams');
     try {
         // Safari/iOS browser fix for audio autoplay
         if (navigator.userAgent.indexOf(' AppleWebKit/') != -1 &&
@@ -70,7 +115,7 @@ async function startStreaming() {
             // Server will use environment variables for other parameters
         });
 
-        connectionToken = response.Token;
+        globals.setData('connectionToken', response.Token);
 
         // Poll for signal response
         let signalResponse = '';
@@ -83,7 +128,7 @@ async function startStreaming() {
             attempts++;
             await sleep(2000); // Wait 2 seconds
 
-            const responseData = await sendPost('/api/GetSignalResponse', { Token: connectionToken });
+            const responseData = await sendPost('/api/GetSignalResponse', { Token: globals.getData('connectionToken') });
             signalResponse = responseData.SignalResponse;
 
             // Update UI with progress
@@ -99,7 +144,7 @@ async function startStreaming() {
         await gameLiftStreams.processSignalResponse(signalResponse);
 
         // Store connection token in URL for reconnection
-        setQueryParams(new Map([['token', connectionToken]]));
+        setQueryParams(new Map([['token', globals.getData('connectionToken')]]));
 
         // Stop loading animation
         LoadingScreenStop();
@@ -140,8 +185,26 @@ async function startStreaming() {
     }
 }
 
+// Disconnect from stream but keep reconnection data
+function disconnectStream() {
+    const gameLiftStreams = globals.getData('gameLiftStreams');
+    if (gameLiftStreams) {
+        gameLiftStreams.close();
+    }
+
+    // Clean up performance monitoring
+    const metricsUpdateInterval = globals.getData('metricsUpdateInterval');
+    if (metricsUpdateInterval) {
+        clearInterval(metricsUpdateInterval);
+        globals.setData('metricsUpdateInterval', null);
+    }
+
+    showPanel('disconnectedPanel');
+}
+
 // Reconnect to an existing stream session
 async function reconnectStreaming() {
+    const gameLiftStreams = globals.getData('gameLiftStreams');
     try {
         showPanel('connectingPanel');
         updateConnectionStatus('Reconnecting to your game...');
@@ -154,7 +217,7 @@ async function reconnectStreaming() {
 
         // Send reconnection request with existing token
         const result = await sendPost('/api/ReconnectStreamSession', {
-            Token: connectionToken,
+            Token: globals.getData('connectionToken'),
             SignalRequest: signalRequest,
         });
 
@@ -191,7 +254,7 @@ async function reconnectStreaming() {
 
         // Clear token since reconnection failed
         clearURLToken();
-        connectionToken = null;
+        globals.setData('connectionToken', null);
         document.getElementById('reconnectButton').style.display = 'none';
         return false;
     }
@@ -199,6 +262,7 @@ async function reconnectStreaming() {
 
 // Terminate the stream session
 async function terminateStream() {
+    const connectionToken = globals.getData('connectionToken');
     if (connectionToken) {
         try {
             await sendPost('/api/DestroyStreamSession', { Token: connectionToken });
@@ -209,28 +273,24 @@ async function terminateStream() {
 
     // Clear URL token and disconnect
     clearURLToken();
-    connectionToken = null;
+    globals.setData('connectionToken', null);
     document.getElementById('reconnectButton').style.display = 'none';
     disconnectStream();
 }
 
-// Disconnect from stream but keep reconnection data
-function disconnectStream() {
-    if (gameLiftStreams) {
-        gameLiftStreams.close();
-    }
-
-    // Clean up performance monitoring
-    if (metricsUpdateInterval) {
-        clearInterval(metricsUpdateInterval);
-        metricsUpdateInterval = null;
-    }
-
-    showPanel('disconnectedPanel');
+// Restart the entire session
+function restartSession() {
+    clearURLToken();
+    globals.setData('connectionToken', null);
+    window.location.reload();
 }
 
-// Toggle input controls
+// -----------------------------------------------------------------------------------------------------
+// UI CONTROLS -----------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------
+
 function toggleInput() {
+    const gameLiftStreams = globals.getData('gameLiftStreams');
     if (!gameLiftStreams) return;
 
     inputEnabled = !inputEnabled;
@@ -244,7 +304,6 @@ function toggleInput() {
     }
 }
 
-// Go fullscreen
 function goFullscreen() {
     // Ensure input is enabled when entering fullscreen
     if (!inputEnabled) {
@@ -257,45 +316,4 @@ function goFullscreen() {
             console.error('Error attempting to enable fullscreen:', err);
         });
     }
-}
-
-// Connection state callback
-function handleConnectionState(state) {
-    console.log('Connection state:', state);
-
-    if (state === 'disconnected') {
-        disconnectStream();
-    }
-}
-
-// Channel error callback
-function handleChannelError(error) {
-    console.error('WebRTC connection error:', error);
-    disconnectStream();
-}
-
-// Server disconnect callback
-function handleServerDisconnect(reasonCode) {
-    console.log('Server disconnected, reason:', reasonCode);
-
-    if (reasonCode === 'terminated') {
-        // Stream session ended, disable reconnection
-        clearURLToken();
-        connectionToken = null;
-        document.getElementById('reconnectButton').style.display = 'none';
-    }
-
-    disconnectStream();
-}
-
-// Application message callback
-function handleApplicationMessage(message) {
-    console.log('Received message from application:', message.length, 'bytes');
-}
-
-// Restart the entire session
-function restartSession() {
-    clearURLToken();
-    connectionToken = null;
-    window.location.reload();
 }

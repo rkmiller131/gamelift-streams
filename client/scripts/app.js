@@ -20,10 +20,9 @@ function initializeApp() {
         return;
     }
 
-    // Check for reconnection token in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    connectionToken = urlParams.get('token');
+    const connectionToken = getQueryParams().get('token');
 
+    // Reconnect to stored session in query params, if set, else go to loading screen
     if (connectionToken) {
         // Show reconnect UI
         document.getElementById('reconnectButton').style.display = 'inline-block';
