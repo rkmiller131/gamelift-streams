@@ -177,7 +177,19 @@ function updateRttDisplay(rtt) {
 function updateDelayDisplay(delay) {
     const delayElement = document.getElementById('metricDelay');
     if (delayElement) {
-        delayElement.textContent = Math.round(delay) + ' ms';
+        let displayText;
+        if (delay < 1) {
+            // For very small values, show 2 decimal places
+            displayText = delay.toFixed(2) + ' ms';
+        } else if (delay < 5) {
+            // For small values, show 1 decimal place
+            displayText = delay.toFixed(1) + ' ms';
+        } else {
+            // For larger values, round to integer
+            displayText = Math.round(delay) + ' ms';
+        }
+
+        delayElement.textContent = displayText;
         setMetricClass(delayElement, delay, 50, 100, true);
     }
 }
