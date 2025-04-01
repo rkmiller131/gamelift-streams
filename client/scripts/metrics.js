@@ -13,6 +13,7 @@ function startPerformanceMonitoring() {
     const metricsUpdateInterval = globals.getData('metricsUpdateInterval');
     if (metricsUpdateInterval) {
         clearInterval(metricsUpdateInterval);
+        console.log('Cleared existing metrics update interval');
     }
 
     // Set up a recurring interval to update metrics
@@ -137,6 +138,7 @@ function trackFrames(timestamp) {
 }
 
 function estimatePerformanceMetrics() {
+    console.log('switching to estimation mode for performance metrics');
     // Dynamic values that change over time to show updates
     const now = Date.now();
     const variation = Math.sin(now / 1000) * 10;
