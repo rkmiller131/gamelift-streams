@@ -2,7 +2,6 @@ let lastFrameTime = 0;
 let frameCount = 0;
 let currentFps = 0;
 
-// Start monitoring performance metrics
 function startPerformanceMonitoring() {
     console.log('Performance monitoring started');
     const gameLiftStreams = globals.getData('gameLiftStreams');
@@ -25,7 +24,6 @@ function startPerformanceMonitoring() {
     }, 1000));
 }
 
-// Fetch and update performance metrics
 async function updatePerformanceMetrics() {
     try {
         const gameLiftStreams = globals.getData('gameLiftStreams');
@@ -47,13 +45,15 @@ function processStats(stats) {
     if (!stats) return;
 
     let rtt = 0;
-    let jitter = 0;
+    let jitter = 0; // packet delay variation
     let fps = 0;
     let framesDecoded = 0;
     let lastFpsUpdate = 0;
 
     stats.forEach(stat => {
-        // Extract RTT from candidate pair (only from the active/nominated pair)
+        // Extract RTT from candidate pair (only from the nominated pair (the one in use))
+        // A candidate-pair is part of WebRTC's ICE protocol that determines how peers connect to each other with
+        // a local candidate (your machine's network interface) and a remote candidate (the other peer's network interface).
         if (stat.type === 'candidate-pair' && stat.nominated === true && stat.state === 'succeeded') {
             rtt = stat.currentRoundTripTime * 1000; // Convert to ms
         }
@@ -67,11 +67,13 @@ function processStats(stats) {
 
             // Get FPS - directly if available
             if (stat.framesPerSecond !== undefined) {
+                console.log('FPS is directly available:', stat.framesPerSecond);
                 fps = stat.framesPerSecond;
             }
 
             // Or calculate from decoded frames
             if (stat.framesDecoded !== undefined) {
+                console.log('FPS calculated from decoded frames:', stat.framesDecoded);
                 framesDecoded = stat.framesDecoded;
             }
 
@@ -162,7 +164,7 @@ function updateFPSDisplay(fps) {
     const fpsElement = document.getElementById('metricFps');
     if (fpsElement) {
         fpsElement.textContent = fps + ' fps';
-        setMetricClass(fpsElement, fps, 30, 15);
+        setMetricClass(fpsElement, fps, 40, 15);
     }
 }
 
@@ -170,7 +172,7 @@ function updateRttDisplay(rtt) {
     const rttElement = document.getElementById('metricRtt');
     if (rttElement) {
         rttElement.textContent = Math.round(rtt) + ' ms';
-        setMetricClass(rttElement, rtt, 100, 200, true);
+        setMetricClass(rttElement, rtt, 45, 100, true);
     }
 }
 
@@ -190,7 +192,7 @@ function updateDelayDisplay(delay) {
         }
 
         delayElement.textContent = displayText;
-        setMetricClass(delayElement, delay, 50, 100, true);
+        setMetricClass(delayElement, delay, 5, 20, true);
     }
 }
 

@@ -80,39 +80,40 @@ function getSignalResponse(req, res) {
 
     const connectionData = req.body.Token && connectionDatabase[req.body.Token];
     if (!connectionData) {
-        console.log('GetSignalResponse connection token is not recognized');
-        return res.status(404).json({ error: 'Token not found' });
+      console.log('GetSignalResponse connection token is not recognized');
+      return res.status(404).json({ error: 'Token not found' });
     }
 
     if (Date.now() - connectionData.Timestamp > STREAM_CONNECTION_TIMEOUT_SECONDS * 1000) {
-        console.log('GetSignalResponse connection token is too old, connection attempt is no longer valid');
-        return res.status(404).json({ error: 'Token expired' });
+      console.log('GetSignalResponse connection token is too old, connection attempt is no longer valid');
+      return res.status(404).json({ error: 'Token expired' });
     }
 
     const requestData = {
-        Identifier: connectionData.StreamGroupId,
-        StreamSessionIdentifier: connectionData.StreamSessionArn,
+      Identifier: connectionData.StreamGroupId,
+      StreamSessionIdentifier: connectionData.StreamSessionArn,
     };
 
     gameliftstreams.getStreamSession(requestData, (err, data) => {
-        if (err) {
+      if (err) {
         console.log(`GetSignalResponse -> GetStreamSession ERROR: ${err}`);
         res.status(generalErrorStatusCode).json({ error: 'Failed to get stream session' });
-        } else {
+
+      } else {
         console.log(`GetSignalResponse -> GetStreamSession SUCCESS: Status=${data.Status}`);
 
         if (data.Status === 'ACTIVATING') {
-            // Stream is not ready yet, client must check again later
-            res.json({ SignalResponse: '' });
+          // Stream is not ready yet, client must check again later
+          res.json({ SignalResponse: '' });
         } else if (data.Status === 'ACTIVE') {
-            // Forward SignalResponse so client can connect to stream
-            res.json({ SignalResponse: data.SignalResponse });
+          // Forward SignalResponse so client can connect to stream
+          res.json({ SignalResponse: data.SignalResponse });
         } else {
-            // Any other status is invalid for client connection
-            console.log(`Invalid stream status: ${data.Status}`);
-            res.status(404).json({ error: 'Stream not available' });
+          // Any other status is invalid for client connection
+          console.log(`Invalid stream status: ${data.Status}`);
+          res.status(404).json({ error: 'Stream not available' });
         }
-        }
+      }
     });
 }
 

@@ -75,7 +75,3 @@ function setQueryParams(queryParamsMap) {
 function getQueryParams() {
     return new URLSearchParams(window.location.search);
 }
-
-// function deleteAllQueryParams() {
-//     window.history.replaceState(null, null, location.href.split("?")[0]);
-// }

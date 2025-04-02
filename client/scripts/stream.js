@@ -24,7 +24,6 @@ function initializeGameLiftStreams() {
                 autoGamepad: true,
                 hapticFeedback: true,
                 setCursor: 'visibility', // Local cursor is never modified, but it can be hidden
-                // autoPointerLock: 'fullscreen',
                 autoPointerLock: true, // The mouse is always captured whenever the remote cursor has been made invisible on stream host.
             },
             clientConnection: {
@@ -120,7 +119,7 @@ async function startStreaming() {
         // Poll for signal response
         let signalResponse = '';
         let attempts = 0;
-        const maxAttempts = 30; // 30 seconds maximum
+        const maxAttempts = 30; // 60 seconds maximum
 
         updateConnectionStatus('Waiting for stream to initialize...');
 
