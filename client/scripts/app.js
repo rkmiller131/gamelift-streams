@@ -20,6 +20,11 @@ function initializeApp() {
         return;
     }
 
+    window.addEventListener('beforeunload', async (event) => {
+        event.preventDefault();
+        await terminateStream();
+    });
+
     const connectionToken = getQueryParams().get('token');
 
     // Reconnect to stored session in query params, if set, else go to loading screen

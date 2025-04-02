@@ -1,7 +1,7 @@
 // --------------------------------------------------------------------------------------
 // GAMELIFT STREAM CLASS INITIALIZATION -------------------------------------------------
 // --------------------------------------------------------------------------------------
-let inputEnabled = true;
+let inputEnabled = false;
 
 function initializeGameLiftStreams() {
     const gameLiftStreams = globals.getData('gameLiftStreams');
@@ -86,14 +86,15 @@ function handleApplicationMessage(message) {
 async function startStreaming() {
     const gameLiftStreams = globals.getData('gameLiftStreams');
     try {
-        // Safari/iOS browser fix for audio autoplay
+        // Safari/iOS browser fix for audio autoplay; preps audio element to prevent startup delays
+        // between stream reconnection/disconnection
         if (navigator.userAgent.indexOf(' AppleWebKit/') != -1 &&
             navigator.userAgent.indexOf(' Gecko/') == -1 &&
             navigator.userAgent.indexOf(' Chrome/') == -1) {
             const preStreamAudio = document.createElement('audio');
             preStreamAudio.loop = true;
             preStreamAudio.src = 'public/silence.mp3';
-            void preStreamAudio.play();
+            void preStreamAudio.play(); // void to suppress the promise return value from .play() method
 
             // Clean up later
             window.preStreamAudio = preStreamAudio;
@@ -151,16 +152,14 @@ async function startStreaming() {
         // Show streaming UI
         showPanel('streamingPanel');
 
-        // Input is enabled by default
-        gameLiftStreams.attachInput();
-        // inputEnabled = true;
-        // if (!inputEnabled) {
-        //     toggleInput();
-        // }
-
         // Start performance monitoring after a short delay
         setTimeout(() => {
             startPerformanceMonitoring();
+            const phantomButton = document.getElementById('phantomPointerLock');
+            if (phantomButton) {
+                // The onclick event triggers toggleInput() to attach input (inputEnabled starts off false)
+                phantomButton.click();
+            }
         }, 3000);
 
         return true;
@@ -175,7 +174,7 @@ async function startStreaming() {
         showError('Failed to connect: ' + (error.message || 'Unknown error'));
         return false;
     } finally {
-        // Clean up the temporary audio element
+        // Clean up the temporary audio element, if one was created
         if (window.preStreamAudio) {
             window.preStreamAudio.pause();
             window.preStreamAudio.remove();

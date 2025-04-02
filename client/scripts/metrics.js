@@ -67,13 +67,11 @@ function processStats(stats) {
 
             // Get FPS - directly if available
             if (stat.framesPerSecond !== undefined) {
-                console.log('FPS is directly available:', stat.framesPerSecond);
                 fps = stat.framesPerSecond;
             }
 
             // Or calculate from decoded frames
             if (stat.framesDecoded !== undefined) {
-                console.log('FPS calculated from decoded frames:', stat.framesDecoded);
                 framesDecoded = stat.framesDecoded;
             }
 
