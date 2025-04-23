@@ -45,7 +45,6 @@ function processStats(stats) {
     if (!stats) return;
 
     let rtt = 0;
-    let jitter = 0; // packet delay variation
     let fps = 0;
     let framesDecoded = 0;
     let lastFpsUpdate = 0;
@@ -60,11 +59,6 @@ function processStats(stats) {
 
         // Extract video metrics from inbound-rtp
         if (stat.type === 'inbound-rtp' && (stat.kind === 'video' || stat.mediaType === 'video')) {
-            // Get jitter as part of delay metrics
-            if (stat.jitter !== undefined) {
-                jitter = stat.jitter * 1000; // Convert to ms
-            }
-
             // Get FPS - directly if available
             if (stat.framesPerSecond !== undefined) {
                 fps = stat.framesPerSecond;
@@ -73,16 +67,6 @@ function processStats(stats) {
             // Or calculate from decoded frames
             if (stat.framesDecoded !== undefined) {
                 framesDecoded = stat.framesDecoded;
-            }
-
-            // Also get jitter buffer delay if available
-            if (stat.jitterBufferDelay !== undefined && stat.jitterBufferEmittedCount > 0) {
-                const avgJitterBufferDelay = (stat.jitterBufferDelay / stat.jitterBufferEmittedCount) * 1000;
-                // Use this as a better estimate of delay
-                updateDelayDisplay(avgJitterBufferDelay);
-            } else {
-                // Fallback to jitter if buffer delay not available
-                updateDelayDisplay(jitter);
             }
 
             // Try to get the frame timestamp to estimate FPS
@@ -151,7 +135,6 @@ function estimatePerformanceMetrics() {
         trackFrames();
     }
     updateRttDisplay(100 + variation);
-    updateDelayDisplay(50 + variation / 2);
 }
 
 // -----------------------------------------------------------------------------------------------------
@@ -171,26 +154,6 @@ function updateRttDisplay(rtt) {
     if (rttElement) {
         rttElement.textContent = Math.round(rtt) + ' ms';
         setMetricClass(rttElement, rtt, 45, 100, true);
-    }
-}
-
-function updateDelayDisplay(delay) {
-    const delayElement = document.getElementById('metricDelay');
-    if (delayElement) {
-        let displayText;
-        if (delay < 1) {
-            // For very small values, show 2 decimal places
-            displayText = delay.toFixed(2) + ' ms';
-        } else if (delay < 5) {
-            // For small values, show 1 decimal place
-            displayText = delay.toFixed(1) + ' ms';
-        } else {
-            // For larger values, round to integer
-            displayText = Math.round(delay) + ' ms';
-        }
-
-        delayElement.textContent = displayText;
-        setMetricClass(delayElement, delay, 5, 20, true);
     }
 }
 
