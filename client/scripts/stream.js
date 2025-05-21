@@ -142,6 +142,7 @@ async function startStreaming() {
         // Complete connection by forwarding signal response
         updateConnectionStatus('Establishing stream connection...');
         await gameLiftStreams.processSignalResponse(signalResponse);
+         updateConnectionStatus('Connected!');
 
         // Store connection token in URL for reconnection
         setQueryParams(new Map([['token', globals.getData('connectionToken')]]));
@@ -149,10 +150,24 @@ async function startStreaming() {
         // option - delay loading screen stop for like a min for aws cyberpunk
         // or stop it and have another panel that says it can take up to one min to load or something like aethir does
         // Stop loading animation
-        LoadingScreenStop();
+        // LoadingScreenStop();
 
-        // Show streaming UI
-        showPanel('streamingPanel');
+        // Show streaming UI beneath loading screen
+        const activePanel = document.getElementById('streamingPanel');
+        if (activePanel) {
+            activePanel.classList.add('active');
+        }
+        // showPanel('streamingPanel');
+        updateConnectionStatus('Please allow 1 min for game to load...');
+
+        // Wait one minute to stop loading screen
+        setTimeout(() => {
+            LoadingScreenStop();
+            const inactivePanel = document.getElementById('connectingPanel');
+            if (inactivePanel) {
+                inactivePanel.classList.remove('active');
+            }
+        }, 60000)
 
         // Start performance monitoring after a short delay
         setTimeout(() => {

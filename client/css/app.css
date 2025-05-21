@@ -134,3 +134,8 @@ button.secondary:hover {
   display: block;
   max-width: 100%;
 }
+
+#connectingPanel {
+  position: fixed;
+  z-index: 50;
+}
