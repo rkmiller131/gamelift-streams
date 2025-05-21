@@ -146,6 +146,8 @@ async function startStreaming() {
         // Store connection token in URL for reconnection
         setQueryParams(new Map([['token', globals.getData('connectionToken')]]));
 
+        // option - delay loading screen stop for like a min for aws cyberpunk
+        // or stop it and have another panel that says it can take up to one min to load or something like aethir does
         // Stop loading animation
         LoadingScreenStop();
 

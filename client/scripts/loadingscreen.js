@@ -6,7 +6,7 @@ let startTime = new Date();
 
 function LoadingScreenStart() {
     startTime = new Date();
-    logoImage.src = 'public/LoadingLogo.png';
+    logoImage.src = 'public/aws-LoadingLogo.png';
     backgroundImage.src = 'public/Background.png';
 
     loadingFlag = true;
